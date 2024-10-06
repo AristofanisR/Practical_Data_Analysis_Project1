@@ -9,3 +9,4 @@
 **Results**: Exploratory analyses indicate that Solar Radiation and some pollutants in the air have the greatest influence on marathon performance. Older runners and children (mostly female athletes) showed greater sensitivity to environmental conditions, leading to slower finish times compared to middle aged male participants.
 
 **Conclusions**: Environmental factors, particularly air quality (some pollutants in the air) and solar radiation, play a critical role in marathon performance. Those findings can help inform runners and organizers about the potential impacts of weather on race outcomes and guide race-day decisions.
+
