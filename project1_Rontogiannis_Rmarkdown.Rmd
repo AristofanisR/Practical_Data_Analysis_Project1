@@ -892,7 +892,9 @@ The findings from this exploratory analysis suggest that air quality and solar r
 
 This study has several limitations that should be considered when interpreting the results. First, a portion of the data were missing, something that may have affected the accuracy of the analysis. Additionally, the dataset only included a few major marathons, limiting the generalizability of the findings to other races or geographical regions. Furthermore, individual factors such as fitness level, nutrition, and race strategy, which also likely influence performance, were not included in the analysis. Future research should consider incorporating these variables and collecting a more comprehensive dataset over a wider range of conditions.
 
-\newpage
+# Data Privacy and Code Availability
+
+The analysis dataset was obtained by Dr. Brett Romano Ely and Dr. Matthew Ely from the Department of Health Sciences at Providence College. The replication code can be found at https://github.com/AristofanisR/Practical_Data_Analysis_Project1
 
 # References
 <div id="refs"></div>
