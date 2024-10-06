@@ -6,7 +6,7 @@ title: |
 subtitle: 
  "Practical Data Analysis - Project 1: Exploratory Data Analysis"
 author: "Aristofanis Rontogiannis"
-date: "2024-10-1"
+date: "2024-9-29"
 output:
   pdf_document: 
     latex_engine: xelatex
