@@ -1,0 +1,918 @@
+---
+title: | 
+ \textbf{Impact of Environmental Conditions in Marathon Performance based on Gender and Age}
+
+ \vspace{1cm} 
+subtitle: 
+ "Practical Data Analysis - Project 1: Exploratory Data Analysis"
+author: "Aristofanis Rontogiannis"
+date: "2024-10-1"
+output:
+  pdf_document: 
+    latex_engine: xelatex
+    keep_tex: true
+link-citations: yes
+---
+
+# Abstract
+
+**Purpose**: This exploratory study examines the effects of environmental conditions, including temperature, humidity, solar radiation, wind, and air quality on marathon performance. Specifically, it explores how these conditions influence performance across different ages and genders, and identifies the weather parameters with the most significant impact on performance outcomes.
+
+**Methods**: Data from five major marathons over a 15-20 year period, covering ages 14 to 85, were analyzed. Environmental conditions such as temperature (°C), humidity (%), wind speed (km/hr), WBGT (°C) and others were recorded. Performance was measured based on finish times, and exploratory analyses were conducted to identify the relationship between weather conditions and race performance.
+
+**Results**: Exploratory analyses indicate that Solar Radiation and some pollutants in the air have the greatest influence on marathon performance. Older runners and children (mostly female athletes) showed greater sensitivity to environmental conditions, leading to slower finish times compared to middle aged male participants.
+
+**Conclusions**: Environmental factors, particularly air quality (some pollutants in the air) and solar radiation, play a critical role in marathon performance. Those findings can help inform runners and organizers about the potential impacts of weather on race outcomes and guide race-day decisions.
+
+
+# Introduction 
+
+This project is a collaboration with Dr. Brett Romano Ely and Dr. Matthew Ely from the Department of Health Sciences at Providence College. The research aims to explore the relationship between environmental conditions and endurance exercise performance, specifically within the context of marathon races. Endurance performance is known to decline with increasing environmental temperatures, a trend that becomes more pronounced during longer-distance events, such as the marathon. This decline is further exacerbated among older adults, who experience thermoregulatory challenges that hinder their ability to dissipate heat efficiently.
+
+Moreover, differences between men and women in endurance performance are well-documented. These factors collectively contribute to variations in performance outcomes during marathons under different environmental conditions.
+
+This dataset includes top performances from five major marathons spanning 15 to 20 years. It covers athletes aged 14 to 85, detailing not only performance but also comprehensive environmental data. The primary objective of this research is to analyze how variables like temperature, humidity, solar radiation, wind, and WBGT (Wet-Bulb Globe Temperature) impact marathon performance across different age groups and between genders.
+
+The project focuses on the effects of increasing age on marathon performance in both men and women, on how environmental conditions influence marathon performance with a focus on potential differences across age and gender and which weather parameters have the most significant impact on marathon performance.
+
+
+```{r setup, include = FALSE}
+
+knitr::opts_chunk$set(echo = FALSE,
+                  message = FALSE,
+                  warning = FALSE,
+                  error = FALSE)
+
+# install.packages("dplyr")
+#install.packages("glue")
+#install.packages("patchwork")
+#install.packages("lubridate")
+#install.packages("ggplot2")
+#install.packages("reshape2")
+#install.packages("GGally")
+#install.packages("ggcorrplot")
+#install.packages("gtsummary")
+#install.packages("summarytools")
+#install.packages("gtsummary")
+library(summarytools)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+library(GGally)
+library(patchwork)
+library(dplyr)
+library(reshape2)
+library(tidyr)
+library(lubridate)
+library(gtsummary)
+library(gt)
+library(ggcorrplot)
+```
+
+
+
+```{r}
+#First of all lets read all datasets 
+data1<-read.csv("project1.csv") 
+data2<-read.csv("aqi_values.csv")
+data3<-read.csv("marathon_dates.csv")
+data4<-read.csv("C:/Users/arontog1/Downloads/course_record (1).csv")
+# dim(data1)
+# dim(data2)
+# dim(data3)
+# dim(data4)
+
+#View(data1)
+#dim(data1)
+#sum(is.na(data1))
+#str(data1)
+#colnames(data1)
+
+```
+
+
+
+# Data Analysis
+
+On this project, we have four datasets which include marathon performance data, air quality index (AQI) values, marathon dates, and course records. We inspect the dimensions and structure of each dataset and identify any missing values. More specificaly we create the percentage of missingness on each variable of each dataset. This preliminary examination is crucial for understanding the completeness of our data and assessing how missing values might impact our analysis. Below, you can see the missingness table for the first dataset. Note that this table is based mostly on raw data. We observe that there is a pattern in the missingness. Eight of the sixteen variables on the first dataset have the same percentage of missingness. We will discuss this pattern later in our analysis.
+
+
+```{r}
+#first, lets find the percentage of missing values on each column on dataset 1
+#  Calculate the percentage of missing values for each column
+missingness_table <- data1 %>%
+  summarise(across(everything(), ~ sum(is.na(.)) / n() * 100)) %>%
+  pivot_longer(everything(), names_to = "Variable", 
+               values_to = "Missing_Percentage") %>%
+  arrange(desc(Missing_Percentage))
+# Create a formatted table with kableExtra
+kable(missingness_table, format = "latex", booktabs = TRUE, 
+      caption = "Percentage of Missing Values by Variable") %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down"), 
+                position = "center", 
+                full_width = FALSE) %>%
+  column_spec(1, bold = TRUE) %>%  # Make the "Variable" column bold
+  row_spec(0, bold = TRUE)         # Make header row bold
+```
+
+```{r}
+#lets find the percentage of missing values on each column on dataset 2
+mis_perc<-colSums(is.na(data2)) / nrow(data2) * 100
+mis_table <- data.frame(Missing_Percentage = mis_perc)
+#sort(mis_perc)
+
+```
+
+```{r}
+#lets find the percentage of missing values on each column on dataset 3
+mis_perc<-colSums(is.na(data3)) / nrow(data3) * 100
+mis_table <- data.frame(Missing_Percentage = mis_perc)
+#sort(mis_perc)
+
+```
+
+```{r}
+#lets find the percentage of missing values on each column on dataset 4
+mis_perc<-colSums(is.na(data4)) / nrow(data4) * 100
+mis_table <- data.frame(Missing_Percentage = mis_perc)
+#sort(mis_perc)
+
+```
+
+In order to examine the effects of age in marathon performance, we categorize the age of marathon participants into defined groups. This means we create a factor variable named "age_group" that contains nine age groups. The age groups are as follows: "14 and under", "15-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", and "80 and over."  I think this is helpful as this stratification allows for more nuanced analysis of performance across different age ranges. Note that in our analysis below we will use both the factor variable "age_group" and the continuous one.
+
+```{r}
+#First of all, I think it would be helpful to create age groups.
+
+data1 <- data1 %>%
+  mutate(age_group = cut(
+    Age..yr.,
+    breaks = c(-Inf, 14, 19, 29, 39, 49, 59, 69, 79, Inf),
+    labels = c(
+      "14 and under",
+      "15-19",
+      "20-29",
+      "30-39",
+      "40-49",
+      "50-59",
+      "60-69",
+      "70-79",
+      "80 and over"
+    ),
+    right = TRUE
+  ))
+
+```
+
+At this point, we want to find the effects of increasing age on marathon performance in men and women. So, the next step involves merging two datasets, more specifically data1 and data4. These two datasets share common variables, more specifically variables related to gender and race (marathon). We first standardize the variable names and structures to facilitate this merge. This allows us to create a comprehensive dataset (data14) that includes marathon performance metrics alongside demographic and some environmental data.
+
+
+```{r}
+#I want to combine data1 and data4 as they share the variable sex and race
+#First i wanna rename "Sex..0.F..1.M." to "Gender" and the
+#"Race..0.Boston..1.Chicago..2.NYC..3.TC..4.D." to "Race"
+names(data1)[names(data1) == "Sex..0.F..1.M."] <- "Gender"
+names(data1)[names(data1) == "Race..0.Boston..1.Chicago..2.NYC..3.TC..4.D."] <- "Race"
+
+#now I have to transform the data4$Race to take values 0, 1, 2, 3, 4
+#so they can match the data1$Race
+data4 <- data4 %>%
+  mutate(Race = recode(
+    Race,
+    "B" = 0,
+    "C" = 1,
+    "NY" = 2,
+    "TC" = 3,
+    "D" = 4
+  ))
+
+#now I have to transform the data4$Gender to take values 0, 1 so they can match
+#the data1$Gender
+data4 <- data4 %>%
+  mutate(Gender = recode(Gender, "M" = 1, "F" = 0, ))
+#So now I  will combine data1 and data4 as they share the variable sex and race
+data14 <- left_join(data1, data4, by = c("Race", "Gender", "Year"))
+#View(data14)
+#str(data14)
+data14$Age..yr.<-as.numeric(data14$Age..yr.)
+data14$Race<-as.factor(data14$Race)
+data14$Gender<-as.factor(data14$Gender)
+
+
+```
+
+
+We create the summary table of the merged dataset tha shows the environmental factors based on the Race. For each of those variables we calculate the mean, sd, min and max if they are continuous, and their number and percentage if they are factor. The 0, 1, 2, 3 and 4 are the Boston marathon, the Chicago marathon, the New York City marathon, the Twin Cities marathon and the Grandmas marathon accordingly. Gender values are 0, 1 for Male and Female.  Note that this table is based mostly on raw data and does not include environmental factors related to air quality. Later in our analysis, we will combine all given datasets and another summary table is created.
+ 
+```{r}
+data14 %>%
+  dplyr::select(Race,
+                Gender,
+                WBGT,
+                Flag,
+                Age..yr.,
+                Wind,
+                Td..C,
+                Tw..C,
+                X.rh,
+                Tg..C,
+                DP,
+                SR.W.m2) %>%
+  distinct() %>%
+  tbl_summary(
+    statistic = list(
+      all_continuous() ~ c("{mean} ({sd})", "{min}, {max}"),
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    by = Race,
+    # Group by marathon
+    digits = all_continuous() ~ 2,
+    missing = "no",
+    type = list(
+      WBGT ~ "continuous2",
+      Gender ~ "categorical",
+      Flag ~ "categorical",
+      X.rh ~ "continuous2",
+      Wind ~ "continuous2",
+      Age..yr. ~ "continuous2",
+      Tw..C ~ "continuous2",
+      Tg..C ~ "continuous2",
+      Td..C ~ "continuous2",
+      DP ~ "continuous2",
+      SR.W.m2  ~ "continuous2"
+    ),
+    label = list(
+      WBGT = "WBGT (C)",
+      Gender = "Sex/Gender of the runners",
+      Flag = "WBGT flag",
+      Age..yr. = "Age in years",
+      X.rh = "Percent relative humidity",
+      Wind = "Wind speed (Km/hr)",
+      SR = "Solar radiation (W/m^2)",
+      Tw..C = "Wet bulb temperature (C) ",
+      Tg..C = "Black globe temperature (C) ",
+      Td..C = "Dry bulb temperature (C)",
+      DP = "Dew Point (C)"
+    )
+  ) %>%
+  modify_caption(caption = "Summary of Environmental Factors by Marathon, 
+                 N = {N}") %>%
+  as_kable_extra(
+    booktabs = TRUE,
+    longtable = TRUE,
+    linesep = "",
+    format = "latex"
+  ) %>%
+  kableExtra::kable_styling(
+    position = "center",
+    latex_options = c("striped", "repeat_header"),
+    stripe_color = "gray!15",
+    font_size = 8
+  )
+```
+
+```{r}
+#lets find the percentage of missing values on each column on dataset 14
+mis_perc <- colSums(is.na(data14)) / nrow(data14) * 100
+mis_table <- data.frame(Missing_Percentage = mis_perc)
+#sort(mis_perc)
+```
+
+At this point, we want to address this pattern of missingness in our dataset. The variable "Flag" is an indicator of Wet Bulb Globe Temperature and risk of heat illness. With that saying, the "Flag" variable can be "White", "Green", "Yellow", "Red" and "Black" based on the amount of heat and high temperature. We noticed that our dataset contains data for all flags except "Black". There are some data in the "Flag" variable tho, that are categorized as "". This might be the case because when the "Flag" is "Black" the race does not take place. What I am trying to say is the pattern of missingness is the result of this scenario. So at this point I find it reasonable to delete those data as those races (marathons) did not take place.
+
+
+```{r}
+data14$Flag <- as.factor(data14$Flag)
+#levels(data14$Flag)
+#sum(data14$Flag == "")
+#For some reason "Black" flag is presented as "" in the dataset. This is because
+#if the Flag is Black the race is not taking place. So I will delete the races 
+#with (data14$Flag) == ""
+data14 <- data14[data14$Flag != "", ]
+```
+
+To ensure the integrity of our analysis, we again evaluate the percentage of missing values in the merged dataset. This step is essential for identifying any potential gaps in the data that could affect our results. As we have assumed, now there are no missing values in our dataset.
+
+
+
+```{r}
+#lets find the percentage of missing values on each column on dataset 14 after
+#the deletion of marathons with black
+mis_perc <- colSums(is.na(data14)) / nrow(data14) * 100
+mis_table <- data.frame(Missing_Percentage = mis_perc)
+#sort(mis_perc)
+```
+
+In the merged dataset, there is a variable named "CR" or course record. We have to convert the course record (CR) from a character string format into numeric seconds, which allows for straightforward comparisons. Following this transformation, we create a new variable, performanceOpp, which indicates a runner's performance relative to the course record. In this context, a higher value for performanceOpp represents a slower time, thereby reflecting the relationship between performance and the current course record.
+
+```{r}
+#I have to transform CR from character to numeric. In order to do that we have 
+#to transform the CR to seconds (as the":" returns NA if we try to make it
+#numeric just with the command "as.NA"). The CR is the best time in that 
+#marathon (now we will have it in seconds).
+data14 <- data14 %>%
+  mutate(CRseconds = sapply(strsplit(CR, ":"), function(x) {
+    as.numeric(x[1]) * 3600 + as.numeric(x[2]) * 60 + as.numeric(x[3])
+  }))
+```
+
+```{r}
+#Now I can calculate the variable performanceOpp (meaning Opposite). On this 
+#case, a higher value for performance indicates a slower time compared to the
+#current course record.
+data14 <- data14 %>%
+  mutate(performanceOpp = data14$CRseconds * (1 + X.CR / 100))
+```
+
+## Analysis of Performance Based on Gender and Age Groups
+
+Using the new dataset, we calculate summary statistics to analyze mean and median performances across different age groups and genders. The results are printed in a summary table, which provides insights into the performance trends. After that, we sort those data based on the mean performance variable. First of all, there only male athletes aged less than 14 years old (23 boys). We can clearly notice that males (Gender=1) aged 30-39 and 20-29 are the ones with the best performance, followed by males aged 40-49 years old. The best female runners (Gender=0) based on their performance belong to the age group of 30-39 old. Those results are pretty reasonable for those marathon running events. 
+
+```{r}
+# Calculate mean performance by age group and gender
+summary_stats <- data14 %>%
+  group_by(age_group, Gender) %>%
+  summarise(
+    mean_performance = mean(performanceOpp, na.rm = TRUE),
+    median_performance = median(performanceOpp, na.rm = TRUE),
+    count = n()
+  )
+
+#print(summary_stats)
+```
+
+```{r}
+#Summary statistics table sorted by mean performance
+summary_table2 <- data14 %>%
+  group_by(age_group, Gender) %>%
+  summarise(
+    mean_performance = mean(performanceOpp, na.rm = TRUE),
+    median_performance = median(performanceOpp, na.rm = TRUE),
+    count = n(),
+    .groups = 'drop'
+  ) %>%
+  arrange(mean_performance)  # Sort by mean performance in ascending order
+
+# Print summary table
+# Create a nicely formatted LaTeX table for PDF
+kable(summary_table2, format = "latex", booktabs = TRUE, 
+      caption = "Summary of Mean and Median Performance by Age Group and Gender") %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down"), 
+                position = "center", 
+                full_width = FALSE) %>%
+  column_spec(1:2, bold = TRUE) %>%  # Make age_group and Gender columns bold
+  row_spec(0, bold = TRUE
+           )  %>%
+kable_styling(font_size = 7) 
+
+```
+
+In order to evaluate our results and examine the effects of increasing age on marathon performance in men and women, we have to visualize the data. We create various plots, including boxplots, line plots, and violin plots, to illustrate the performance distributions by age group and gender. Finally, we include histograms to explore the distribution of performance across age groups, something that provides an intuitive understanding of the performance landscape within our dataset. These visualizations facilitate a deeper understanding of how marathon performance varies with age and gender.
+
+In the violin plot below, we can clearly see that the age groups of 20-29, 30-39 and 40-49 years old achieved a better performance on both male and female athletes, while people aged more than 80 years old are the slowest ones, something that is completely reasonable. Those age groups also have less variability and less outliers. In contrast, people that are younger or older than that seem to correspond to data with more variability meaning that some runners run much longer or shorter times than others. Those outliers can affect the results of an analysis, such as skewing means, impacting regression results, or influencing correlation coefficients. This specific project does not aim in regression analysis or modeling so we will not delete them.
+
+
+```{r,fig.width=5, fig.height=4,fig.align='center'}
+# Violin plot of performance by age groups and gender
+ggplot(data14, aes(
+  x = age_group,
+  y = performanceOpp,
+  fill = factor(Gender)
+)) +
+  geom_violin(trim = FALSE) +
+  labs(title = "Violin Plot of Marathon Performance by Age Group and Gender",
+       x = "Age Groups",
+       y = "Performance (Lower is faster)",
+       fill = "Gender") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+Furthermore, we create a line plot to visualize the mean performance by age group and gender. The interpretation of this plot is the same as of the above plots and tables. We can clearly see that the line is a "u-shape" line, meaning that children, teenagers and older athletes tend to run slower than the others, with male athletes running generally faster than female ones in all age groups.
+
+
+```{r,fig.width=5, fig.height=4,fig.align='center'}
+#Create a line plot to visualize the mean performance 
+#by age group, separated by gender.
+## Mean performance plot
+mean_performance_plot <- summary_stats %>%
+  ggplot(aes(
+    x = age_group,
+    y = mean_performance,
+    color = factor(Gender),
+    group = Gender
+  )) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Mean Marathon Performance by Age Group and Gender",
+    x = "Age Groups",
+    y = "Mean Performance (seconds - Lower is faster)",
+    color = "Gender"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(mean_performance_plot)
+```
+
+
+We also create histograms to explore the distribution of performance across age groups and gender. The first thing we notice is that the majority of people that take place in these marathons are aged 20 to 69 years old. Also, in those visualizations, the more to the left the plot is, the better the performance. So we can clearly see that the age groups of 20-29, 30-39 and 40-49 years old achieved a better performance on both male and female athletes.
+
+```{r,fig.width=5, fig.height=4,fig.align='center'}
+# Histogram of performance by age groups
+ggplot(data14, aes(x = performanceOpp, fill = factor(Gender))) +
+  geom_histogram(binwidth = 100,
+                 position = "identity",
+                 alpha = 0.5) +
+  facet_wrap( ~ age_group) +
+  labs(title = "Histogram of Marathon Performance by Age Group and Gender",
+       x = "Performance (Lower is faster)",
+       y = "Count",
+       fill = "Gender") +
+  theme_minimal()
+
+
+```
+
+## Analysis of Performance Based on Flag and Gender
+In this section, we aim to investigate how the Flag (based on WBGT), which indicates varying levels of temperature,  affects marathon performance across different genders. To facilitate our analysis, the Flag and Gender variables in the dataset have been converted into factors for better handling.
+
+```{r}
+#Convert Flag and Gender variables to factor
+data14$Gender <- as.factor(data14$Gender)
+#levels(data14$Gender)
+```
+The summary statistics were calculated to examine the average performance (measured in performanceOpp, where lower values indicate better performance) of marathon runners based on the WBGT-flag status and gender. From the summary statistics table, it is observed that male runners consistently achieve faster times than female runners across all temperature conditions. This suggests that gender plays a significant role in performance outcomes under varying temperature conditions.
+
+```{r}
+#how flag affect performance (with gender)#############
+summary_stats <- data14 %>%
+  group_by(Flag, Gender) %>%
+  summarise(
+    mean_performance = mean(performanceOpp, na.rm = TRUE),
+    median_performance = median(performanceOpp, na.rm = TRUE),
+    count = n()
+  )
+
+#print(summary_stats)
+#seems like men faster than women in every Flag
+```
+
+The bar plot below  provides a clear comparison of mean performance across different WBGT flag conditions, segmented by gender. The results highlight noticeable differences in performance levels, emphasizing that as the temperature conditions indicated by the WBGT flag become more strenuous, the performance gap between male and female runners persists. Another important thing is that the temperature does not seem to affect the performance. There is only a slight decrease in the performance when the temperature conditions are worst. This might happen because at this point we used the variable WBGT which is th weighted average of dry bulb, wet bulb, and globe temperature and we do not know the relationship between each of those variables and performance yet.
+
+
+```{r,fig.width=4, fig.height=3,fig.align='center'}
+##how flag affect performance (with gender)
+mean_performance_plot <- data14 %>%
+  group_by(Flag, Gender) %>%
+  summarise(mean_performance = mean(performanceOpp, na.rm = TRUE)) %>%
+  ggplot(aes(x = Flag, y = mean_performance, fill = Gender)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(title = "Mean Performance by Flag and Gender",
+       x = "WBGT Flag",
+       y = "Mean Performance") +
+  theme_minimal()
+
+print(mean_performance_plot)
+```
+
+
+## Analysis of Performance Based on Wind and Gender
+
+Now we are interested in finding any relationship between Wind and Performance. For both genders the correlation is pretty weak. So both male and female performance is not affected from wind using our data. An explanation to this is that the range of wind in our data is from 0 to 21.75 km/h, so not so strong.
+
+```{r,fig.width=5, fig.height=4,fig.align='center'}
+#Lets find the relationship between Wind and Performance (and gender)
+#Calculate correlation for each gender
+correlations <- data14 %>%
+  group_by(Gender) %>%
+  summarise(correlation = cor(Wind, performanceOpp, use = "complete.obs"))
+
+#print(correlations)
+#Very weak correlation
+```
+
+The plot below shows the average performance based on wind speed and gender. As observed in the plot, there is no clear pattern or strong correlation between wind speed and performance, suggesting that wind speed might not have a significant impact on marathon times in this dataset. However, for young and old athletes (<14yo and >80yo) we can see a relationship. It is evident that, on average, men tend to perform better than women across all wind conditions. 
+This aligns with general observations of gender differences in endurance performance, but the impact of wind speed itself does not appear to be substantial.
+
+
+
+```{r,fig.width=5, fig.height=3,fig.align='center'}
+# Creating a new dataset for means
+mean_data <- data14 %>%
+  group_by(Wind, Gender) %>%
+  summarise(mean_performance = mean(performanceOpp, na.rm = TRUE))
+
+ggplot(mean_data, aes(x = Wind, y = mean_performance, color = 
+                        as.factor(Gender))) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Mean Performance by Wind and Gender",
+       x = "Wind (Speed)",
+       y = "Mean Performance",
+       color = "Gender") +
+  theme_minimal()
+#we can see that theres no clear pattern so not strong correlation (of course
+#men have better performance than women)
+```
+
+## Analysis of Performance Based on Wind and Age Groups
+
+
+```{r}
+#Lets find the relationship between Wind and Performance (and age groups)
+#Calculate correlation for each gender
+correlations <- data14 %>%
+  group_by(age_group) %>%
+  summarise(correlation = cor(Wind, performanceOpp, use = "complete.obs"))
+
+#print(correlations)
+#Very weak correlation for all age groups (a little stronger for 14 and)
+```
+
+The plot below shows the average performance based on wind speed and age group. As observed in the plot, there is no clear pattern or strong correlation between wind speed and age group, suggesting that wind speed might not have a significant impact on marathon times in this dataset. However, it is evident that, on average, people aged 20-49 years old tend to run faster across all wind conditions.
+This aligns with general observations of age group differences in endurance performance, but the impact of wind speed itself does not appear to be substantial.
+
+```{r,fig.width=5, fig.height=3,fig.align='center'}
+# Creating a new dataset for means
+mean_data <- data14 %>%
+  group_by(Wind, age_group) %>%
+  summarise(mean_performance = mean(performanceOpp, na.rm = TRUE))
+
+ggplot(mean_data, aes(x = Wind, y = mean_performance, color = age_group)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Mean Performance by Wind and Age Group",
+       x = "Wind (Km/h)",
+       y = "Mean Performance",
+       color = "Age Group") +
+  theme_minimal()
+```
+
+We can see that none of the temperature values or Wind affects the performance. We also calculated the correlation of other variables like Td, Tw, Rh and SR with performance and it is still weak. This might happen because some of those environmental variables relate to each other. 
+
+
+## Analysis of the Environmental Variables that have the biggest impact in Performance
+
+After all that said, we want to incorporate the air quality into our analysis to examine if it affects the performance. The variable aqi contains a lot of missing values and it may not be helpful to use it in our analysis.
+
+We create a new dataset that combines our old dataset with a new one. The new dataset contains local pollutants measured in the aqi like PM2.5, Sulfur Dioxide, Nitrogen Dioxide and Ozone that we extracted with the r packagce RAQSAPI.
+
+
+
+```{r}
+data1<-read.csv("project1.csv")
+data2<-read.csv("aqi_values.csv")
+data3<-read.csv("marathon_dates.csv")
+data4<-read.csv("C:/Users/arontog1/Downloads/course_record (1).csv")
+# Import datasets
+main_data = data1
+aqi_data <- read.csv("C:/Users/arontog1/Downloads/aqi_values_new.csv")
+record_data = data4
+
+# Merge main and record data sets
+record_data <- record_data %>%
+  mutate(Sex = ifelse(Gender == "F", 0, 1)) %>%
+  mutate(Race_code = case_when(
+    Race == "B" ~ 0,
+    Race == "C" ~ 1,
+    Race == "NY" ~ 2,
+    Race == "TC" ~ 3,
+    Race == "D" ~ 4
+  ))
+
+merged_main <- main_data %>%
+  left_join(
+    record_data[, c("Year", "Sex", "CR", "Race_code")],
+    by = c(
+      "Race..0.Boston..1.Chicago..2.NYC..3.TC..4.D." = "Race_code",
+      "Year" = "Year",
+      "Sex..0.F..1.M." = "Sex"
+    )
+  ) %>%
+  dplyr::rename(Race_code = Race..0.Boston..1.Chicago..2.NYC..3.TC..4.D.,
+                Sex = Sex..0.F..1.M.,
+                Age = Age..yr.) %>%
+  mutate(Gender = factor(ifelse(Sex == 0, "Female", "Male"))) %>%
+  mutate(
+    Marathon = case_when(
+      Race_code == 0 ~ "Boston",
+      Race_code == 1 ~ "NYC",
+      Race_code == 2 ~ "Chicago",
+      Race_code == 3 ~ "Twin Cities",
+      Race_code == 4 ~ "Grandmas"
+    )
+  ) %>%
+  mutate(Flag = factor(Flag, levels = c("White", "Green", "Yellow", 
+                                        "Red", "Black"))) %>%
+  mutate(FinishTime = as.numeric(as.difftime(CR, units = "sec") * (1 + X.CR /
+                                                                     100)))
+
+
+#Clean up AQI by CBSA
+aqi_data = aqi_data %>%
+  distinct()
+
+aqi_mean = aqi_data %>%
+  group_by(marathon, date_local, parameter, sample_duration) %>%
+  summarise(daily_mean = mean(arithmetic_mean, na.rm = TRUE)) %>%
+  mutate(parameter_duration = paste0(parameter, "-", sample_duration))
+
+aqi_pivot = aqi_mean[, c("marathon", "date_local", "parameter_duration", 
+                         "daily_mean")] %>%
+  pivot_wider(names_from = parameter_duration, values_from = daily_mean) %>%
+  mutate(Year = year(date_local)) %>%
+  select(
+    -c(
+      "PM2.5 - Local Conditions-24 HOUR",
+      "Sulfur dioxide-5 MINUTE",
+      "Sulfur dioxide-3-HR BLK AVG",
+      "Sulfur dioxide-24-HR BLK AVG",
+      "Ozone-8-HR RUN AVG BEGIN HOUR",
+      "Acceptable PM2.5 AQI & Speciation Mass-1 HOUR",
+      "Acceptable PM2.5 AQI & Speciation Mass-24 HOUR",
+      "Acceptable PM2.5 AQI & Speciation Mass-24-HR BLK AVG",
+      "PM2.5 - Local Conditions-24-HR BLK AVG"
+    )
+  )
+
+merged_main = merged_main %>%
+  left_join(aqi_pivot, by = c("Marathon" = "marathon", "Year" = "Year"))
+```
+
+
+```{r}
+names(merged_main)[names(merged_main) == "Race_code"] <- "marathon/race"
+names(merged_main)[names(merged_main) == "FinishTime"] <- "PerformanceOpp"
+merged_main <- select(merged_main, -date_local, -Marathon, -DP, -CR)
+names(merged_main)[c(6, 7, 8, 9, 10, 11, 16, 17, 18, 19)] <- c(
+  "Percent off current course record for gender",
+  "Dry bulb temperature in Celsius",
+  "Wet bulb temperature in Celsius",
+  "Percent relative humidity",
+  "Black globe temperature in Celsius",
+  "Solar radiation in Watts per meter squared",
+  "Nitrogen Dioxide",
+  "Ozone",
+  "Sulfur Dioxide",
+  "PM2.5"
+)
+merged_main <- select(merged_main, -6)
+```
+
+```{r}
+merged_main <- merged_main %>%
+  mutate(age_group = cut(
+    Age,
+    breaks = c(-Inf, 14, 19, 29, 39, 49, 59, 69, 79, Inf),
+    labels = c(
+      "14 and under",
+      "15-19",
+      "20-29",
+      "30-39",
+      "40-49",
+      "50-59",
+      "60-69",
+      "70-79",
+      "80 and over"
+    ),
+    right = TRUE
+  ))
+
+```
+
+```{r}
+merged_main <- select(merged_main, -6, -7, -9)
+merged_main <- merged_main[merged_main$Flag != "Black", ]
+```
+
+```{r}
+merged_main <- select(merged_main, -PM2.5)
+merged_main$Age<-as.numeric(merged_main$Age)
+```
+
+
+At this point we will create a summary table for this dataset. This is the merged dataset containing the most important environmental variables that can have an impact on performance. for temperature, we using the variable WBGT which is Weighted average of dry bulb, wet bulb, and globe temperature. For each of those variables we calculate the mean, sd, min and max if they are continuous, and their number and percentage if they are factor. The 0, 1, 2, 3 and 4 are the Boston marathon, the Chicago marathon, the New York City marathon, the Twin Cities marathon and the Grandmas marathon accordingly. Gender values are 0, 1 for Male and Female. 
+
+
+We can see that the variable PM2.5 has a lot of missing values (70% missing) so it will be better if we delete it.
+
+As environmental variables we will use the WBGT for temperature (it is Weighted average of dry bulb, wet bulb, and globe temperature - the other temperature variables are correlated to each other), the Wind, the humidity, the solar radiation and the four pollutants (Ozone, Nitrogen Dioxide, Sulfur Dioxide and PM2.5)
+
+```{r}
+# Calculate the percentage of missing values for each column
+missingness_table <- merged_main %>%
+  summarise(across(everything(), ~ sum(is.na(.)) / n() * 100)) %>%
+  pivot_longer(everything(), names_to = "Variable", 
+               values_to = "Missing_Percentage") %>%
+  arrange(desc(Missing_Percentage))
+# Create a formatted table with kableExtra
+kable(missingness_table, format = "latex", booktabs = TRUE, 
+      caption = "Percentage of Missing Values by Variable") %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down"), 
+                position = "center", 
+                full_width = FALSE) %>%
+  column_spec(1, bold = TRUE) %>%  # Make the "Variable" column bold
+  row_spec(0, bold = TRUE) %>%
+kable_styling(font_size = 7) 
+```
+
+```{r}
+merged_main %>%
+  dplyr::select(
+    `marathon/race`,
+     Sex,
+     WBGT,
+     Age,
+     Flag,
+     Wind,
+    `Percent relative humidity`,
+    `Solar radiation in Watts per meter squared`,
+     Ozone,
+    `Sulfur Dioxide`,
+    `Nitrogen Dioxide`,
+    PerformanceOpp
+  ) %>%
+  distinct() %>%
+  tbl_summary(
+    statistic = list(
+      all_continuous() ~ c("{mean} ({sd})", "{min}, {max}"),
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    by =`marathon/race`,  # Group by 'Marathon'
+    digits = all_continuous() ~ 2,
+    missing = "no",  # Exclude missing data
+    type = list(
+      WBGT ~ "continuous2",
+      Flag ~ "categorical",
+      Sex ~ "categorical",
+      `Percent relative humidity` ~ "continuous2",
+      Wind ~ "continuous2",
+      Age ~ "continuous2",
+      PerformanceOpp ~ "continuous2",
+      Ozone ~ "continuous2",
+       `Sulfur Dioxide` ~ "continuous2",
+      `Nitrogen Dioxide` ~ "continuous2",
+      `Solar radiation in Watts per meter squared`  ~ "continuous2"
+    ),
+    label = list(
+      WBGT = "WBGT (C)",
+      Sex = "Gender of the runners",
+      Flag = "WBGT flag",
+      `Percent relative humidity` = "Percent relative humidity",
+      Wind = "Wind speed (Km/hr)",
+     `Solar radiation in Watts per meter squared` = "Solar radiation (W/m^2)",
+      `Sulfur Dioxide` = "SO2 pollutant ",
+      `Nitrogen Dioxide` = "NO2 pollutant ",
+      Ozone = "Ozone pollutant",
+     Age = "Age in years",
+      PerformanceOpp = "Seconds off record"
+    )
+  ) %>%
+  modify_caption(caption = 
+                   "Summary of Environmental Factors by Marathon, N = {N}") %>%
+  as_kable_extra(
+    booktabs = TRUE,
+    longtable = TRUE,
+    linesep = "",
+    format = "latex",
+  ) %>%
+  kableExtra::kable_styling(
+    position = "center",
+    latex_options = c("striped", "repeat_header"),
+    stripe_color = "gray!15",
+    font_size = 6
+  )
+```
+
+
+
+At this point we want to examine which of the seven environmental variables affect the performance. First of all, we have to examine if they are correlated with the variable performance at all. We observe that all seven environmental variables have weak correlation to performance. Based on the correlations, the variable with the most impact on performance is Ozone, followed by Nitrogen Dioxide, Solar Radiation and Sulfur Dioxide. . However, there are some variables that are correlated with each other. For example, Sulfur with Nitrogen dioxide, and relative humidity with solar radiation.
+
+
+
+
+
+```{r}
+# Create a data frame with the performance and environmental variables
+environmental_vars <- merged_main[, c(11, 6, 7, 8, 9, 12, 13, 14)]
+# Calculate the correlation matrix
+correlation_matrix <- cor(environmental_vars, use = "complete.obs")
+# Print the correlation coefficients with performance
+performance_correlations <- correlation_matrix["PerformanceOpp", -1]
+# Exclude performance itself
+#print(performance_correlations)
+# Identify the variable with the highest correlation
+max_corr_variable <- names(performance_correlations)[which.max(abs(performance_correlations))]
+max_corr_value <- max(abs(performance_correlations))
+```
+
+
+```{r,fig.width=4.5, fig.height=4,fig.align='center'}
+ggcorrplot(
+  correlation_matrix,
+  method = "circle",
+  # Shape of the correlation coefficient
+  type = "lower",
+  lab = TRUE,   
+  lab_size = 2.5,  
+    title = "Correlation Matrix ",
+  ggtheme = theme_minimal(),
+  colors = c("blue", "white", "red")
+) + 
+  theme(axis.text.x = element_text(size = 5.5),  # Adjust size of x-axis labels
+        axis.text.y = element_text(size = 5.5))  # Adjust size of y-axis labels
+```
+
+Those four plots below show that Ozone, Nitrogen Dioxide, Sulfur Dioxide and Solar radiation affect performance. Those environmental conditions tho, mostly affect athletes that are either too young (less that 14 years old) or old. Furthermore, female athletes seem to be more susceptible to those environmental conditions than male.
+
+```{r,fig.width=3.5, fig.height=3}
+# Scatter plot for each environmental variable vs performance, colored by 
+#gender and faceted by age group
+env_variables <- c("Ozone",
+                   "`Solar radiation in Watts per meter squared`",
+                   "`Nitrogen Dioxide`", "`Sulfur Dioxide`")  # 
+
+for (var in env_variables) {
+  p <- ggplot(merged_main,
+              aes_string(x = var, y = "PerformanceOpp", color = "Gender")) +
+    geom_point() +
+    geom_smooth(method = "lm") +  # Adds a regression line
+    facet_wrap( ~ age_group) +  # Facet by age group
+    labs(title = paste("PerformanceOpp vs", var),
+         x = var,
+         y = "Performance") +
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(size = 3),   # Smaller x-axis numbers (ticks)
+      axis.text.y = element_text(size = 4),   # Smaller y-axis numbers (ticks)
+      axis.title.x = element_text(size = 5), # Smaller x-axis label
+      axis.title.y = element_text(size = 5), # Smaller y-axis label
+      strip.text = element_text(size = 5)    # Adjust facet label size
+    )
+  
+  print(p)  # Ensure ggplot is printed
+}
+```
+
+
+A more sophisticated approach is to perform linear regression. This will help us understand the relationship between performance and the environmental variables, while controlling for the effects of other variables.
+Since the two dioxides are strongly correlated, we can use the one with the strongest correlation to the performance (Nitrogen Dioxide). Similarly, we will use Solar radiation and not the humidity. This approach can also help us examine which environmental condition has a strongest impact on Performance.
+
+After running some linear regression models, we can conclude that linearity is not suitable for those data. Although,it is obvious that Age and Gender have huge impact in the Performance, nothing can be concluded for the environmental factors as it seems that their relationship with Performance might not be linear. At this point someone can proceed by doing Splines or Generalized Additive Models or something else that can examine non-linear relationships. We opted not to include linear regressions or anything else on the report of this project as it focuses more in exploratory analysis. 
+
+
+```{r}
+model <- lm(
+  PerformanceOpp ~ WBGT + Wind + Ozone + `Nitrogen Dioxide`
+  + `Solar radiation in Watts per meter squared` ,
+  data = merged_main
+)
+
+# Get the summary of the linear model
+#summary(model)
+```
+
+```{r}
+model <- lm(
+  PerformanceOpp ~ WBGT + Wind + Ozone + `Nitrogen Dioxide` + 
+    `Solar radiation in Watts per meter squared` ,
+  data = merged_main
+)
+
+# Get the summary of the linear model
+#summary(model)
+```
+
+
+# Conclusions and Limitations
+The findings from this exploratory analysis suggest that air quality and solar radiation have an impact on marathon performance, particularly for older and younger participants. Male middle-aged runners performed better on average, while wind and humidity had a less pronounced effect on their performance. Additionally, the decline in performance was more substantial in older age groups, indicating that thermoregulatory challenges increase with age. These results provide valuable insights for race organizers and athletes, emphasizing the need to consider environmental conditions when planning training and races.
+
+This study has several limitations that should be considered when interpreting the results. First, a portion of the data were missing, something that may have affected the accuracy of the analysis. Additionally, the dataset only included a few major marathons, limiting the generalizability of the findings to other races or geographical regions. Furthermore, individual factors such as fitness level, nutrition, and race strategy, which also likely influence performance, were not included in the analysis. Future research should consider incorporating these variables and collecting a more comprehensive dataset over a wider range of conditions.
+
+\newpage
+
+## References
+
+Ely, B. R., Cheuvront, S. N., Kenefick, R. W., & Sawka, M. N. (2010). Aerobic performance is degraded, despite modest hyperthermia, in hot environments. Med Sci Sports Exerc, 42(1), 135-41.
+
+Ely, M. R., Cheuvront, S. N., Roberts, W. O., & Montain, S. J. (2007). Impact of weather on marathon-running performance. Medicine and science in sports and exercise, 39(3), 487-493.
+
+Kenney, W. L., & Munce, T. A. (2003). Invited review: aging and human temperature regulation. Journal of applied physiology, 95(6), 2598-2603.
+
+Besson, T., Macchi, R., Rossi, J., Morio, C. Y., Kunimasa, Y., Nicol, C., ... & Millet, G. Y. (2022). Sex differences in endurance running. Sports medicine, 52(6), 1235-1257.
+
+Yanovich, R., Ketko, I., & Charkoudian, N. (2020). Sex differences in human thermoregulation: relevance for 2020 and beyond. Physiology, 35(3), 177-184.
+
+\newpage
+
+# Code Appendix
+
+```{r ref.label = knitr::all_labels(), echo = TRUE, eval = FALSE}
+```
+
+
+
+
+
