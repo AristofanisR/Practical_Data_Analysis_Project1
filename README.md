@@ -12,4 +12,6 @@
 
 ## File Description
 
-** `aqi.R` ** : Extract air pollutants from EPA
+**`aqi.R`** : Extract air pollutants from EPA
+**`project1_Rontogiannis_Rmarkdown.Rmd`** : The main Exploratory Analysis report
+**`References.bib`** : The article bibliography for the report
