@@ -18,4 +18,5 @@
 
 **`References.bib`** : The article bibliography for the report
 
-**`Practical_Data_Analysis_Project1_Aristofanis_Rontogiannis`** : The knitted report ad.pdf
+**`Practical_Data_Analysis_Project1_Aristofanis_Rontogiannis.pdf`** : The knitted report as .pdf
+
