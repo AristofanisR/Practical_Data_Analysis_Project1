@@ -1,6 +1,6 @@
 # Project-1
 
-# Abstract
+## Abstract
 
 **Purpose**: This exploratory study examines the effects of environmental conditions, including temperature, humidity, solar radiation, wind, and air quality on marathon performance. Specifically, it explores how these conditions influence performance across different ages and genders, and identifies the weather parameters with the most significant impact on performance outcomes.
 
@@ -10,3 +10,6 @@
 
 **Conclusions**: Environmental factors, particularly air quality (some pollutants in the air) and solar radiation, play a critical role in marathon performance. Those findings can help inform runners and organizers about the potential impacts of weather on race outcomes and guide race-day decisions.
 
+## File Description
+
+** `aqi.R` ** : Extract air pollutants from EPA
