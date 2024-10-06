@@ -12,11 +12,22 @@
 
 ## File Description
 
-**`aqi.R`** : Extracted air pollutants from EPA
+**`aqi.R`**: Extracted air pollutants from EPA
 
-**`project1_Rontogiannis_Rmarkdown.Rmd`** : The main Exploratory Analysis report
+**`project1_Rontogiannis_Rmarkdown.Rmd`**: The main Exploratory Analysis report
 
-**`References.bib`** : The article bibliography for the report
+**`References.bib`**: The article bibliography for the report
 
-**`Practical_Data_Analysis_Project1_Aristofanis_Rontogiannis.pdf`** : The knitted report as .pdf
+**`Practical_Data_Analysis_Project1_Aristofanis_Rontogiannis.pdf`**: The knitted report as .pdf
 
+## Dependancies
+
+**Data Manipulation and Transformation**: `dplyr`, `reshape2`
+
+**Data Manipulation and Transformation**: `ggplot2`, `patchwork`, `GGally`, `ggcorrplot`
+
+**Data Summary and Reporting**: `gtsummary`, `summarytools`
+
+**String Manipulation**: `glue`
+
+**Date and Time Manipulation**: `lubridate`
